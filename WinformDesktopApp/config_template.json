@@ -1,0 +1,11 @@
+﻿{
+  "Keycloak": {
+    "Server": "",
+    "Client": "",
+    "Realm": "",
+    "RedirectPort": 0,
+    "NeedRole": false
+  },
+  "ApplicationSettings": {
+  }
+}
