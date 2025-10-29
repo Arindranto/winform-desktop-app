@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.Net;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Duende.IdentityModel.OidcClient.Browser;
@@ -9,16 +10,33 @@ namespace WinformDesktopApp
 {
     public class SystemBrowser : IBrowser
     {
+        private static SystemBrowser SINGLETON;
         private readonly int _port;
+        private HttpListener _listener;
+        private static readonly object _lock = new object();
 
-        public SystemBrowser(int port) => _port = port;
+        public static SystemBrowser Singleton(int port)
+        {
+            if (SINGLETON == null)
+            {
+                lock (_lock)
+                {
+                    SINGLETON = new SystemBrowser(port);
+                }
+            }
+            return SINGLETON;
+        }
+        private SystemBrowser(int port) => _port = port;
 
         public async Task<BrowserResult> InvokeAsync(BrowserOptions options, CancellationToken cancellationToken = default)
         {
             var prefix = $"http://127.0.0.1:{_port}/";
-            using var listener = new HttpListener();
-            listener.Prefixes.Add(prefix);
-            listener.Start();
+            if (_listener == null)
+            {
+                _listener = new HttpListener();
+                _listener.Prefixes.Add(prefix);
+                _listener.Start();
+            }
 
             try
             {
@@ -26,24 +44,24 @@ namespace WinformDesktopApp
             }
             catch (Exception ex)
             {
-                listener.Stop();
+                _listener.Stop();
                 return new BrowserResult { ResultType = BrowserResultType.UnknownError, Error = ex.Message };
             }
 
             Task<HttpListenerContext> contextTask;
             try
             {
-                contextTask = listener.GetContextAsync();
+                contextTask = _listener.GetContextAsync();
             }
             catch (Exception ex)
             {
-                listener.Stop();
+                _listener.Stop();
                 return new BrowserResult { ResultType = BrowserResultType.UnknownError, Error = ex.Message };
             }
 
             using (cancellationToken.Register(() =>
             {
-                try { listener.Stop(); } catch { }
+                try { _listener.Stop(); } catch { }
             }))
             {
                 HttpListenerContext context;
@@ -65,7 +83,7 @@ namespace WinformDesktopApp
                 response.OutputStream.Close();
 
                 var raw = context.Request.Url.ToString();
-                listener.Stop();
+                _listener.Stop();
                 return new BrowserResult { Response = raw, ResultType = BrowserResultType.Success };
             }
         }

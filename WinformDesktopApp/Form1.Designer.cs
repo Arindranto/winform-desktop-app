@@ -33,8 +33,11 @@
             // 
             // button1
             // 
+            button1.Enabled = false;
             button1.Font = new Font("Segoe UI", 15F, FontStyle.Regular, GraphicsUnit.Point);
-            button1.Location = new Point(25, 12);
+            button1.Location = new Point(30, 12);
+            button1.MaximumSize = new Size(113, 49);
+            button1.MinimumSize = new Size(113, 49);
             button1.Name = "button1";
             button1.Size = new Size(113, 49);
             button1.TabIndex = 0;
@@ -49,7 +52,6 @@
             ClientSize = new Size(178, 80);
             Controls.Add(button1);
             MaximizeBox = false;
-            MaximumSize = new Size(194, 119);
             MinimumSize = new Size(194, 119);
             Name = "Form1";
             StartPosition = FormStartPosition.CenterScreen;

@@ -23,15 +23,17 @@ namespace WinformDesktopApp
         public Form1()
         {
             InitializeComponent();
-            InitializeOidcClient();
+            Authenticate();
         }
 
-        private async void InitializeOidcClient()
+        private void InitializeOidcClient()
         {
+            _oidcClient = null;
             // Replace these values with your Keycloak and Client details
             var authority = $"{_keycloakSettings.Server}/realms/{_keycloakSettings.Realm}";
             var clientId = _keycloakSettings.Client; // Your Keycloak Client ID
             var redirectUri = $"http://127.0.0.1:{_keycloakSettings.RedirectPort}/"; // Must match the one registered in Keycloak and Windows
+
 
             var options = new OidcClientOptions
             {
@@ -39,7 +41,7 @@ namespace WinformDesktopApp
                 ClientId = clientId,
                 Scope = "openid profile offline_access", // Requested scopes
                 RedirectUri = redirectUri,
-                Browser = new SystemBrowser(port: _keycloakSettings.RedirectPort), // Use the System Browser for secure flow
+                Browser = SystemBrowser.Singleton(port: _keycloakSettings.RedirectPort), // Use the System Browser for secure flow
                 // This is the crucial part to allow HTTP discovery
                 Policy = new Policy
                 {
@@ -52,7 +54,6 @@ namespace WinformDesktopApp
             };
 
             _oidcClient = new OidcClient(options);
-            await Authenticate();
         }
 
         private async void button1_Click(object sender, EventArgs e)
@@ -64,7 +65,7 @@ namespace WinformDesktopApp
         {
             // Code for authentication
             // 1. Initiate the Login Flow (generates PKCE, launches external browser)
-
+            InitializeOidcClient();
             var loginRequest = new LoginRequest
             {
 
@@ -126,7 +127,7 @@ namespace WinformDesktopApp
 
         private void Form1_Shown(object sender, EventArgs e)
         {
-            Hide();
+            // Hide();
         }
 
         private Claim? processAccessToken(string accessToken)
